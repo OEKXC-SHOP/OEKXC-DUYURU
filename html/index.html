@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>OEKXC Duyuru Sistemi</title>
+    <link rel="stylesheet" href="panel.css">
+    <link rel="stylesheet" href="announcement.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="container">
+        <div id="announcement-panel">
+            <div class="header">
+                <h2>Duyuru Sistemi</h2>
+                <button id="close-btn">✕</button>
+            </div>
+            
+            <div class="content">
+                <div class="announcement-form">
+                    <div class="importance-selector">
+                        <label>Önem Seviyesi:</label>
+                        <div class="importance-buttons">
+                            <button class="importance-btn active" data-level="low">Düşük</button>
+                            <button class="importance-btn" data-level="medium">Orta</button>
+                            <button class="importance-btn" data-level="high">Yüksek</button>
+                        </div>
+                    </div>
+                    <textarea id="announcement-text" placeholder="Duyuru mesajınızı yazın..." maxlength="250"></textarea>
+                    <div class="char-counter">
+                        <span id="char-count">0</span> / 250
+                    </div>
+                    <button id="send-btn">Duyuru Yap</button>
+                </div>
+                <div id="announcement-history"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

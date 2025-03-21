@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>OEKXC Duyuru Önizleme</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .preview-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 9999;
+        }
+        
+        .preview-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #2c3e50;
+            color: white;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: 0.3s;
+        }
+        
+        .preview-button:hover {
+            background: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div id="container" style="display: flex;">
+        <div id="announcement-panel">
+            <div class="header">
+                <h2>Duyuru Sistemi</h2>
+                <button id="close-btn">✕</button>
+            </div>
+            
+            <div class="content">
+                <div class="announcement-form">
+                    <div class="importance-selector">
+                        <label>Önem Seviyesi:</label>
+                        <div class="importance-buttons">
+                            <button class="importance-btn low active" data-level="low">
+                                <span class="dot"></span>
+                                Düşük
+                            </button>
+                            <button class="importance-btn medium" data-level="medium">
+                                <span class="dot"></span>
+                                Orta
+                            </button>
+                            <button class="importance-btn high" data-level="high">
+                                <span class="dot"></span>
+                                Yüksek
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="announcement-text" placeholder="Duyuru mesajınızı buraya yazın..."></textarea>
+                    <button id="send-btn">Duyuru Yap</button>
+                </div>
+
+                <div class="history-section">
+                    <h3>Önceki Duyurular</h3>
+                    <div id="announcement-history"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-buttons">
+        <button class="preview-button" onclick="testAnnouncement('low')">Test Düşük Önem</button>
+        <button class="preview-button" onclick="testAnnouncement('medium')">Test Orta Önem</button>
+        <button class="preview-button" onclick="testAnnouncement('high')">Test Yüksek Önem</button>
+        <button class="preview-button" onclick="testMultiple()">Çoklu Test</button>
+    </div>
+
+    <script>
+        let container = document.getElementById('container');
+        let announcementsContainer = null;
+        let selectedImportance = 'low';
+
+        // Duyuru container'ı oluşturma
+        function createAnnouncementsContainer() {
+            if (!announcementsContainer) {
+                announcementsContainer = document.createElement('div');
+                announcementsContainer.id = 'announcements-container';
+                document.body.appendChild(announcementsContainer);
+            }
+            return announcementsContainer;
+        }
+
+        // Önem seviyesi butonları için event listener'lar
+        document.querySelectorAll('.importance-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.importance-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedImportance = btn.dataset.level;
+            });
+        });
+
+        document.getElementById('close-btn').addEventListener('click', function() {
+            container.style.display = "none";
+        });
+
+        document.getElementById('send-btn').addEventListener('click', function() {
+            let text = document.getElementById('announcement-text').value.trim();
+            if (text) {
+                showAnnouncementDisplay(text, "Admin", selectedImportance);
+                document.getElementById('announcement-text').value = '';
+                
+                // Geçmişe ekle
+                const historyItem = {
+                    admin_name: "Admin",
+                    message: text,
+                    importance_level: selectedImportance,
+                    created_at: new Date().toISOString()
+                };
+                updateHistory([historyItem].concat(getHistory()));
+            }
+        });
+
+        function showAnnouncementDisplay(message, admin, importance = 'low', displayTime = 5000) {
+            const container = createAnnouncementsContainer();
+            const display = document.createElement('div');
+            display.className = `announcement-display ${importance}`;
+            
+            display.innerHTML = `
+                <div class="header">
+                    <div class="icon">📢</div>
+                </div>
+                <div class="admin-name">${admin}</div>
+                <div class="message">${message}</div>
+                <div class="progress-bar"></div>
+            `;
+            
+            container.appendChild(display);
+            
+            setTimeout(() => {
+                display.classList.add('removing');
+                setTimeout(() => {
+                    display.remove();
+                    if (container.children.length === 0) {
+                        container.remove();
+                        announcementsContainer = null;
+                    }
+                }, 500);
+            }, displayTime);
+        }
+
+        function getHistory() {
+            const history = localStorage.getItem('announcement_history');
+            return history ? JSON.parse(history) : [];
+        }
+
+        function updateHistory(history) {
+            localStorage.setItem('announcement_history', JSON.stringify(history.slice(0, 10)));
+            
+            const historyContainer = document.getElementById('announcement-history');
+            historyContainer.innerHTML = '';
+            
+            history.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item ${item.importance_level}`;
+                historyItem.innerHTML = `
+                    <div class="admin-name">${item.admin_name}</div>
+                    <div class="message">${item.message}</div>
+                    <div class="date">${new Date(item.created_at).toLocaleString('tr-TR')}</div>
+                `;
+                
+                historyItem.addEventListener('click', () => {
+                    document.getElementById('announcement-text').value = item.message;
+                    const importanceBtn = document.querySelector(`.importance-btn[data-level="${item.importance_level}"]`);
+                    if (importanceBtn) {
+                        document.querySelectorAll('.importance-btn').forEach(b => b.classList.remove('active'));
+                        importanceBtn.classList.add('active');
+                        selectedImportance = item.importance_level;
+                    }
+                });
+                
+                historyContainer.appendChild(historyItem);
+            });
+        }
+
+        // Test fonksiyonları
+        function testAnnouncement(importance) {
+            const messages = {
+                low: "Bu düşük önemli bir test duyurusudur.",
+                medium: "⚠️ Dikkat! Bu orta önemli bir test duyurusudur.",
+                high: "🚨 ACİL! Bu yüksek önemli bir test duyurusudur!"
+            };
+            showAnnouncementDisplay(messages[importance], "Test Admin", importance);
+        }
+
+        function testMultiple() {
+            setTimeout(() => testAnnouncement('low'), 0);
+            setTimeout(() => testAnnouncement('medium'), 1000);
+            setTimeout(() => testAnnouncement('high'), 2000);
+        }
+
+        // Başlangıçta geçmişi yükle
+        updateHistory(getHistory());
+    </script>
+</body>
+</html>
